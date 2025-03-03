@@ -1,12 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-
-# Servir archivos estáticos desde la carpeta "static"
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Permitir peticiones desde cualquier origen
 app.add_middleware(
