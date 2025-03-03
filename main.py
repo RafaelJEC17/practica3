@@ -13,8 +13,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Contador de visitas
-visit_count = {"count": 0}
+# Función para leer y actualizar el contador de visitas en un archivo
+def get_visit_count():
+    try:
+        with open("visitas.txt", "r") as file:
+            return int(file.read())
+    except FileNotFoundError:
+        return 0  # Si no existe el archivo, comenzamos desde 0
+
+def update_visit_count(count):
+    with open("visitas.txt", "w") as file:
+        file.write(str(count))
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
@@ -24,5 +33,7 @@ def read_root():
 
 @app.get("/visitas")
 def get_visits():
-    visit_count["count"] += 1
-    return {"visitas": visit_count["count"]}
+    visit_count = get_visit_count()  # Obtener el contador actual
+    visit_count += 1  # Incrementar el contador
+    update_visit_count(visit_count)  # Guardar el nuevo contador
+    return {"visitas": visit_count}
