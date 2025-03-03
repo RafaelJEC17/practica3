@@ -1,9 +1,14 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Permitir peticiones desde cualquier origen (para la página web)
+# Servir archivos estáticos desde la carpeta "static"
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Permitir peticiones desde cualquier origen
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,9 +20,11 @@ app.add_middleware(
 # Contador de visitas
 visit_count = {"count": 0}
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-    return {"message": "Bienvenido a la API"}
+    # Enviar el archivo HTML cuando se accede a la raíz
+    with open("index.html", "r") as file:
+        return file.read()
 
 @app.get("/visitas")
 def get_visits():

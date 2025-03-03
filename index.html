@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Visitas</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Bienvenido</h1>
+    <p>Visitas: <span id="contador">0</span></p>
+    <button onclick="getVisitas()">Actualizar</button>
+
+    <script>
+        async function getVisitas() {
+            const response = await fetch("TU_URL_DE_RAILWAY/visitas");
+            const data = await response.json();
+            document.getElementById("contador").innerText = data.visitas;
+        }
+    </script>
+</body>
+</html>
