@@ -1,10 +1,23 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 
-# Permitir peticiones desde cualquier origen
+# Conexión a MongoDB Atlas
+@app.on_event("startup")
+async def startup_db_client():
+    # Aquí debes colocar la URL de conexión de MongoDB Atlas
+    mongo_uri =  client = "mongodb+srv://Rafael:12345@cluster0.4bqxv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    app.mongodb_client = AsyncIOMotorClient(mongo_uri)
+    app.mongodb = app.mongodb_client["mi_base_de_datos"]  # Reemplaza "mi_base_de_datos" con el nombre que elegiste
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    app.mongodb_client.close()
+
+# Middleware CORS (permite solicitudes desde cualquier origen)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,27 +26,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Función para leer y actualizar el contador de visitas en un archivo
-def get_visit_count():
-    try:
-        with open("visitas.txt", "r") as file:
-            return int(file.read())
-    except FileNotFoundError:
-        return 0  # Si no existe el archivo, comenzamos desde 0
-
-def update_visit_count(count):
-    with open("visitas.txt", "w") as file:
-        file.write(str(count))
-
-@app.get("/", response_class=HTMLResponse)
-def read_root():
-    # Enviar el archivo HTML cuando se accede a la raíz
-    with open("index.html", "r") as file:
-        return file.read()
-
+# Contador de visitas
 @app.get("/visitas")
-def get_visits():
-    visit_count = get_visit_count()  # Obtener el contador actual
-    visit_count += 1  # Incrementar el contador
-    update_visit_count(visit_count)  # Guardar el nuevo contador
-    return {"visitas": visit_count}
+async def get_visits():
+    visits_collection = app.mongodb["visitas"]  # Colección donde se guardarán las visitas
+    visit = await visits_collection.find_one({"_id": "contador"})
+    
+    if not visit:
+        # Si no existe el contador, se crea con valor 1
+        visit = {"_id": "contador", "count": 1}
+        await visits_collection.insert_one(visit)
+    else:
+        # Si existe, incrementa el contador
+        visit["count"] += 1
+        await visits_collection.update_one({"_id": "contador"}, {"$set": {"count": visit["count"]}})
+    
+    return {"visitas": visit["count"]}
